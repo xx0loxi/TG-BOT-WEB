@@ -1,133 +1,120 @@
-const chatWindow = document.getElementById("chat-window");
-const userInput = document.getElementById("user-input");
-const historyList = document.getElementById("history-list");
-const tabChat = document.getElementById("tab-chat");
-const tabHistory = document.getElementById("tab-history");
-const sectionChat = document.getElementById("chat-section");
-const sectionHistory = document.getElementById("history-section");
-const newChatBtn = document.getElementById("new-chat");
+// ——————————————————————————————————————————
+// 1. Звёздное поле на фоне
+// ——————————————————————————————————————————
+const canvas = document.getElementById('starfield');
+const ctx    = canvas.getContext('2d');
+let stars    = [];
+const numStars = 200;
+const speed    = 0.02;
 
-let currentSession = [];
-const STORAGE_KEY = 'chat_sessions';
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
 
-// Переключение вкладок
-tabChat.addEventListener('click', () => switchTab('chat'));
-tabHistory.addEventListener('click', () => {
-  switchTab('history');
-  renderHistory();
-});
-
-// Новый чат
-newChatBtn.addEventListener('click', () => {
-  if (currentSession.length) saveSession();
-  clearChat();
-  switchTab('chat');
-});
-
-function switchTab(tab) {
-  if (tab === 'chat') {
-    tabChat.classList.add('active');
-    tabHistory.classList.remove('active');
-    sectionChat.classList.add('active');
-    sectionHistory.classList.remove('active');
-  } else {
-    tabHistory.classList.add('active');
-    tabChat.classList.remove('active');
-    sectionHistory.classList.add('active');
-    sectionChat.classList.remove('active');
+function initStars() {
+  stars = [];
+  for (let i = 0; i < numStars; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      z: Math.random() * canvas.width
+    });
   }
 }
+initStars();
 
-// Отправка сообщения
+function animateStars() {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let s of stars) {
+    s.z -= speed * canvas.width;
+    if (s.z <= 0) {
+      s.x = Math.random() * canvas.width;
+      s.y = Math.random() * canvas.height;
+      s.z = canvas.width;
+    }
+    const k = 128.0 / s.z;
+    const px = (s.x - canvas.width/2) * k + canvas.width/2;
+    const py = (s.y - canvas.height/2) * k + canvas.height/2;
+    const size = (1 - s.z / canvas.width) * 3;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(px, py, size, 0, Math.PI*2);
+    ctx.fill();
+  }
+  requestAnimationFrame(animateStars);
+}
+animateStars();
+
+
+// ——————————————————————————————————————————
+// 2. Логика чата с эффектом набора
+// ——————————————————————————————————————————
+const chatWindow = document.getElementById('chat-window');
+const inputField = document.getElementById('user-input');
+const sendBtn    = document.getElementById('send-btn');
+
+sendBtn.addEventListener('click', sendMessage);
+inputField.addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+
 async function sendMessage() {
-  const text = userInput.value.trim();
+  const text = inputField.value.trim();
   if (!text) return;
-  appendMessage('👤', text);
-  userInput.value = '';
-  const botTextEl = appendMessage('🤖', '');
-  typewriter(botTextEl, 'Печатает...');
+  appendMsg('user', text);
+  inputField.value = '';
+  const botTextEl = appendMsg('bot', '');
+  await typewriter(botTextEl, 'Печатает…', 40);
 
-  currentSession.push({ sender: 'user', text });
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer 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',
+        'Authorization': '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',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo',
+        model: 'z-ai/glm-4.5-air:free',
         messages: [{ role: 'user', content: text }]
       })
     });
-    const json = await res.json();
+    const json  = await res.json();
     const reply = json.choices[0].message.content;
-    typewriter(botTextEl, reply);
-    currentSession.push({ sender: 'bot', text: reply });
+    await typewriter(botTextEl, reply, 20);
   } catch (err) {
-    typewriter(botTextEl, 'Ошибка при получении ответа.');
+    await typewriter(botTextEl, 'Ошибка при получении ответа.', 20);
     console.error(err);
   }
 }
 
-// Добавить сообщение в окно
-function appendMessage(senderIcon, text) {
+// Добавление сообщений
+function appendMsg(who, text) {
   const msg = document.createElement('div');
-  msg.className = 'message';
-  msg.innerHTML = `<strong>${senderIcon}</strong>: <span class="text"></span>`;
-  const textEl = msg.querySelector('.text');
+  msg.className = `message ${who}`;
+  msg.innerHTML = `<span class="text"></span>`;
   chatWindow.appendChild(msg);
   chatWindow.scrollTop = chatWindow.scrollHeight;
+  const textEl = msg.querySelector('.text');
+  textEl.innerText = text;
   return textEl;
 }
 
 // Эффект «набор текста»
-function typewriter(textEl, fullText, speed = 20) {
-  textEl.innerHTML = '';
-  let i = 0;
-  const iv = setInterval(() => {
-    textEl.innerHTML += fullText.charAt(i++);
-    if (i >= fullText.length) clearInterval(iv);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  }, speed);
-}
-
-// Сохранить текущую сессию в localStorage
-function saveSession() {
-  const sessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  const title = new Date().toLocaleString();
-  sessions.push({ title, messages: currentSession });
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
-}
-
-// Очистить окно чата и текущую сессию
-function clearChat() {
-  chatWindow.innerHTML = '';
-  currentSession = [];
-}
-
-// Отобразить список сессий из localStorage
-function renderHistory() {
-  historyList.innerHTML = '';
-  const sessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  sessions.forEach((s, idx) => {
-    const li = document.createElement('li');
-    li.textContent = s.title;
-    li.onclick = () => loadSession(idx);
-    historyList.appendChild(li);
+function typewriter(el, fullText, speed) {
+  return new Promise(resolve => {
+    el.innerText = '';
+    let i = 0;
+    const iv = setInterval(() => {
+      el.innerText += fullText.charAt(i++);
+      if (i >= fullText.length) {
+        clearInterval(iv);
+        resolve();
+      }
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }, speed);
   });
 }
-
-// Загрузить выбранную сессию в чат
-function loadSession(index) {
-  const sessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  const { messages } = sessions[index];
-  clearChat();
-  messages.forEach(msg => {
-    const el = appendMessage(msg.sender === 'bot' ? '🤖' : '👤', '');
-    typewriter(el, msg.text, 0); // без задержки
-    currentSession.push(msg);
-  });
-  switchTab('chat');
-}
-
