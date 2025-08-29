@@ -1,5 +1,5 @@
 // ====================================
-// 1. Звёздное поле с мерцанием
+// 1. Звёздное поле с мерцанием (без изменений)
 // ====================================
 const canvas = document.getElementById('starfield');
 const ctx    = canvas.getContext('2d');
@@ -36,15 +36,15 @@ function renderStars() {
       s.y = Math.random() * canvas.height;
       s.z = canvas.width;
     }
-    const k = 128.0 / s.z;
-    const px = (s.x - canvas.width/2) * k + canvas.width/2;
-    const py = (s.y - canvas.height/2) * k + canvas.height/2;
-    const size = (1 - s.z / canvas.width) * 3;
-    const alpha = 0.5 + Math.sin(s.blink) * 0.5;
+    const k   = 128.0 / s.z;
+    const px  = (s.x - canvas.width/2) * k + canvas.width/2;
+    const py  = (s.y - canvas.height/2) * k + canvas.height/2;
+    const sz  = (1 - s.z / canvas.width) * 3;
+    const alp = 0.5 + Math.sin(s.blink) * 0.5;
 
     ctx.beginPath();
-    ctx.arc(px, py, size, 0, Math.PI*2);
-    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.arc(px, py, sz, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${alp})`;
     ctx.fill();
   });
 
@@ -52,8 +52,9 @@ function renderStars() {
 }
 renderStars();
 
+
 // ====================================
-// 2. Чат-логика с обработкой ошибок
+// 2. Чат-логика с корректным разбором ответа
 // ====================================
 const chatWindow = document.getElementById('chat-window');
 const inputField = document.getElementById('user-input');
@@ -62,12 +63,14 @@ const newChatBtn = document.getElementById('new-chat');
 
 let isProcessing = false;
 
+// Вешаем обработчики
 sendBtn.addEventListener('click', sendMessage);
 inputField.addEventListener('keydown', e => {
   if (e.key === 'Enter') sendMessage();
 });
 newChatBtn.addEventListener('click', clearChat);
 
+// Утилиты по вставке и анимации
 function appendMsg(role, content, isTyping = false) {
   const msg = document.createElement('div');
   msg.className = `message ${role}` + (isTyping ? ' typing' : '');
@@ -90,53 +93,67 @@ async function typewriter(el, text, speed = 20) {
   }
 }
 
+// Основная отправка
 async function sendMessage() {
   if (isProcessing) return;
-  const text = inputField.value.trim();
-  if (!text) return;
+  const userText = inputField.value.trim();
+  if (!userText) return;
 
-  appendMsg('user', text);
+  // Пользовательское сообщение
+  appendMsg('user', userText);
   inputField.value = '';
   isProcessing = true;
   sendBtn.disabled = true;
 
-  // Показать типинг-индикатор
+  // Показать typing-индикатор
   const typingEl = appendMsg('bot', '', true);
 
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization':
-          'Bearer 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',
+        'Authorization': 'Bearer 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',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'z-ai/glm-4.5-air:free',
-        messages: [{ role: 'user', content: text }]
+        model: 'openai/gpt-3.5-turbo',
+        messages: [{ role: 'user', content: userText }]
       })
     });
 
-    const json = await response.json();
-    console.log(json);
+    const data = await res.json();
+    console.log('API ответ:', data);
 
-    // Удаляем индикатор
+    // Убираем индикатор typing
     typingEl.remove();
 
-    if (response.ok && json.choices?.[0]?.message?.content) {
-      const reply = json.choices[0].message.content;
-      const botEl = appendMsg('bot', '');
-      await typewriter(botEl, reply);
-    } else {
-      const errorMsg = json.error?.message || 'Сервер вернул пустой ответ';
-      const botEl = appendMsg('bot', '');
-      await typewriter(botEl, errorMsg);
+    // Если HTTP-ошибка
+    if (!res.ok) {
+      const errMsg = data.error?.message || `HTTP ${res.status}`;
+      appendMsg('bot', `Ошибка API: ${errMsg}`);
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    typingEl.remove();
+
+    // Пытаемся достать текст ответа
+    const aiText =
+      data.choices?.[0]?.message?.content ||   // chat/completions
+      data.choices?.[0]?.text             ||   // completions
+      '';
+
+    if (!aiText) {
+      console.error('Нечего показывать, data:', data);
+      appendMsg('bot', 'Пустой ответ от сервера. Проверьте токен и лимиты.');
+      return;
+    }
+
+    // Набираем ответ
     const botEl = appendMsg('bot', '');
-    await typewriter(botEl, 'Ошибка сети или сервера.');
+    await typewriter(botEl, aiText);
+
+  } catch (err) {
+    console.error('Сетевая ошибка:', err);
+    typingEl.remove();
+    appendMsg('bot', `Сетевая ошибка: ${err.message}`);
   } finally {
     isProcessing = false;
     sendBtn.disabled = false;
