@@ -7,13 +7,32 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="chat-container">
-    <div id="chat-window"></div>
-    <div class="input-area">
-      <input type="text" id="user-input" placeholder="Напиши что-нибудь..." />
-      <button onclick="sendMessage()">Отправить</button>
-    </div>
+  <div class="app-container">
+    <header>
+      <nav class="tabs">
+        <button id="tab-chat" class="tab active">Чат</button>
+        <button id="tab-history" class="tab">История</button>
+      </nav>
+      <button id="new-chat" class="new-chat-btn">Новый чат</button>
+    </header>
+
+    <main>
+      <!-- Вкладка Чат -->
+      <section id="chat-section" class="section active">
+        <div id="chat-window"></div>
+        <div class="input-area">
+          <input type="text" id="user-input" placeholder="Напиши что-нибудь..." />
+          <button onclick="sendMessage()">Отправить</button>
+        </div>
+      </section>
+
+      <!-- Вкладка История -->
+      <section id="history-section" class="section">
+        <ul id="history-list"></ul>
+      </section>
+    </main>
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>
