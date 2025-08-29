@@ -107,7 +107,7 @@ async function sendMessage() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo',
+        model: 'z-ai/glm-4.5-air:free',
         messages: [{ role: 'user', content: text }]
       })
     });
@@ -130,3 +130,4 @@ function clearChat() {
   inputField.value = '';
   inputField.focus();
 }
+
