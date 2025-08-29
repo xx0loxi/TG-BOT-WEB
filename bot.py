@@ -1,20 +1,38 @@
+import os
+from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import WebAppInfo
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram import F
 from aiogram.utils import executor
-import os
 
-TOKEN = os.getenv("8390052911:AAGe_-E0EIidr489gIfC_U7_iNf3CLK1LyM")  # или вставь напрямую
-WEBAPP_URL = "https://yourdomain.com/index.html"  # ссылка на твой WebApp
+# Загрузка переменных окружения из .env
+load_dotenv()
 
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+WEBAPP_URL = os.getenv('WEBAPP_URL')
 
-@dp.message_handler(commands=['start'])
-async def start(message: types.Message):
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button = types.KeyboardButton(text="💬 Открыть чат", web_app=WebAppInfo(url=WEBAPP_URL))
-    keyboard.add(button)
-    await message.answer("Привет! Открой мини-чат с ИИ 👇", reply_markup=keyboard)
+if not TOKEN or not WEBAPP_URL:
+    raise RuntimeError("Не найдены переменные TELEGRAM_BOT_TOKEN или WEBAPP_URL в окружении")
 
+# Инициализация бота и диспетчера
+bot = Bot(token=TOKEN, parse_mode="HTML")
+dp = Dispatcher()
+
+# Хэндлер на команду /start
+@dp.message(F.text == "/start")
+async def cmd_start(message: types.Message):
+    kb = ReplyKeyboardBuilder()
+    kb.button(
+        text="💬 Открыть чат",
+        web_app=WebAppInfo(url=WEBAPP_URL)
+    )
+    kb.adjust(1)
+    await message.answer(
+        "Привет! Нажми на кнопку ниже, чтобы открыть мини-чат с ИИ:",
+        reply_markup=kb.as_markup(resize_keyboard=True)
+    )
+
+# Запуск поллинга
 if __name__ == '__main__':
-    executor.start_polling(dp)
+    executor.start_polling(dp, skip_updates=True)
