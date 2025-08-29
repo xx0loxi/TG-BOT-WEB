@@ -19,7 +19,7 @@ async function sendMessage() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo",
+        model: "z-ai/glm-4.5-air:free",
         messages: [{ role: "user", content: userText }]
       })
     });
@@ -51,4 +51,5 @@ function typewriter(element, sender, fullText, speed = 20) {
     if (i >= fullText.length) clearInterval(interval);
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }, speed);
+
 }
