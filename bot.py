@@ -9,7 +9,7 @@ from aiogram.utils import executor
 # Загрузка переменных окружения из .env
 load_dotenv()
 
-TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TOKEN = os.getenv('8390052911:AAGe_-E0EIidr489gIfC_U7_iNf3CLK1LyM')
 WEBAPP_URL = os.getenv('WEBAPP_URL')
 
 if not TOKEN or not WEBAPP_URL:
@@ -36,3 +36,4 @@ async def cmd_start(message: types.Message):
 # Запуск поллинга
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
+
