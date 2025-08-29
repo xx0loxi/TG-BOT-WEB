@@ -1,0 +1,90 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #1e1e2f, #2a2a3d);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.chat-container {
+  width: 100%;
+  max-width: 600px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  border-radius: 12px;
+  background: rgba(30, 30, 47, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+#chat-window {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 8px;
+  background: #2a2a3d;
+  animation: fadeIn 0.5s ease-in;
+}
+
+.input-area {
+  display: flex;
+  margin-top: 10px;
+}
+
+input {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  background: #3a3a4d;
+  color: #fff;
+  transition: background 0.3s;
+}
+
+input:focus {
+  background: #4a4a5d;
+  outline: none;
+}
+
+button {
+  padding: 12px 20px;
+  margin-left: 10px;
+  background: #4e8cff;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover {
+  background: #3c6fd9;
+}
+
+.message {
+  margin-bottom: 10px;
+  animation: fadeInUp 0.4s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
