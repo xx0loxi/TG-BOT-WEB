@@ -2,35 +2,24 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ИИ Чат</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
+  <!-- Канвас для звёздного фона -->
+  <canvas id="starfield"></canvas>
+
+  <!-- Основное приложение -->
   <div class="app-container">
     <header>
-      <nav class="tabs">
-        <button id="tab-chat" class="tab active">Чат</button>
-        <button id="tab-history" class="tab">История</button>
-      </nav>
-      <button id="new-chat" class="new-chat-btn">Новый чат</button>
+      <h1>ИИ Чат</h1>
     </header>
-
-    <main>
-      <!-- Вкладка Чат -->
-      <section id="chat-section" class="section active">
-        <div id="chat-window"></div>
-        <div class="input-area">
-          <input type="text" id="user-input" placeholder="Напиши что-нибудь..." />
-          <button onclick="sendMessage()">Отправить</button>
-        </div>
-      </section>
-
-      <!-- Вкладка История -->
-      <section id="history-section" class="section">
-        <ul id="history-list"></ul>
-      </section>
-    </main>
+    <main id="chat-window"></main>
+    <footer>
+      <input type="text" id="user-input" placeholder="Напишите сообщение..." autocomplete="off"/>
+      <button id="send-btn">Отправить</button>
+    </footer>
   </div>
 
   <script src="script.js"></script>
